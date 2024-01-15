@@ -126,7 +126,6 @@ class _HomeState extends State<Home> {
           visibility = storedData[0][WeatherDatabase.columnVisibility];
           degree = storedData[0][WeatherDatabase.columnWindDegree];
           int storedTemperatureUnit = storedData[0][WeatherDatabase.columnTemperatureUnit];
-
           //for the temperature unit
           selectedTemperatureUnit = storedTemperatureUnit == 0
           ? TemperatureUnit.Celsius
@@ -263,6 +262,7 @@ class _HomeState extends State<Home> {
         }
       });
     });
+
       //store the hourly Forecast Data
       await _hourlyForecastWeatherDatabase.insertWeather({
         HourlyForecastWeatherDatabase.columnTemperature: hourlyForecastList[0].temperature,
@@ -272,14 +272,14 @@ class _HomeState extends State<Home> {
     }
 
   // Function to handle day selection
-  void onDaySelected(int index) {
+  /*void onDaySelected(int index) {
     setState(() {
       selectedDayIndex = index;
       fetchWeatherData();
       fetchForecastData();
       fetchHourlyForecastData();
     });
-  }
+  }*/
 
   // this function to get the asset path based on the weather state name
   String getImageAssetPath(String weatherStateName) {
@@ -315,10 +315,11 @@ class _HomeState extends State<Home> {
     if (selectedUnit != null) {
       setState(() {
         selectedTemperatureUnit = selectedUnit;
-        _convertTemperature();
-
+        userTemperatureUnit = selectedUnit;
         //store the unit
         _database.setTemperatureUnit(location, selectedUnit == TemperatureUnit.Celsius ? 0 : 1);
+
+        _convertTemperature();
       });
     }
   }
@@ -329,7 +330,7 @@ class _HomeState extends State<Home> {
     _initializeDatabase();
   }
 
-  void _initializeDatabase() async {
+  Future<void> _initializeDatabase() async {  //future is added so that initializing happens fast and does not interfere with the UI
     try {
       _database = WeatherDatabase(); // Initialize the database
       _forecastWeatherDatabase = ForecastWeatherDatabase(); //Initialise the forecast database
@@ -337,6 +338,7 @@ class _HomeState extends State<Home> {
       await _database.initDatabase();
       await _forecastWeatherDatabase.initDatabase();
       await _hourlyForecastWeatherDatabase.initDatabase();
+     // await _database.setTemperatureUnit(location, userTemperatureUnit == TemperatureUnit.Celsius ? 0 : 1);
       await fetchWeatherData();       // Await the completion of fetching current weather data
       await fetchForecastData();           //for weekly forecast
       await fetchHourlyForecastData();     // for hourly forecast

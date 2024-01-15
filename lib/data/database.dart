@@ -45,11 +45,11 @@ class WeatherDatabase {
     );
   }
 
-  Future<void> setTemperatureUnit(String location, int temperatureUnit) async {
+  Future<void> setTemperatureUnit(String location, int userTemperatureUnit) async {
     final db = await _database.database;
     await db.update(
       dbTable,
-      {columnTemperatureUnit: temperatureUnit},
+      {columnTemperatureUnit: userTemperatureUnit},
       where: '$columnLocation = ?',
       whereArgs: [location],
     );
