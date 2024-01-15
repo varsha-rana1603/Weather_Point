@@ -115,6 +115,7 @@ class _HomeState extends State<Home> {
       // When no internet connection, load data from the database
       var storedData = await _database.getWeather(location);
       if (storedData.isNotEmpty) {
+        selectedTemperatureUnit = TemperatureUnit.Celsius;
         // Use stored data
         setState(() {
           temperature = storedData[0][WeatherDatabase.columnTemperature];
@@ -125,12 +126,12 @@ class _HomeState extends State<Home> {
           clouds = storedData[0][WeatherDatabase.columnClouds];
           visibility = storedData[0][WeatherDatabase.columnVisibility];
           degree = storedData[0][WeatherDatabase.columnWindDegree];
-          int storedTemperatureUnit = storedData[0][WeatherDatabase.columnTemperatureUnit];
+       //   int storedTemperatureUnit = storedData[0][WeatherDatabase.columnTemperatureUnit];
           //for the temperature unit
-          selectedTemperatureUnit = storedTemperatureUnit == 0
+        /*  selectedTemperatureUnit = storedTemperatureUnit == 0
           ? TemperatureUnit.Celsius
-          : TemperatureUnit.Fahrenheit;
-          _convertTemperature();
+          : TemperatureUnit.Fahrenheit;*/
+         // _convertTemperature();
         });
       }
       return;
@@ -138,28 +139,36 @@ class _HomeState extends State<Home> {
     var weatherResult = await http.get(Uri.parse(
         'https://api.openweathermap.org/data/2.5/weather?q=$location&appid=$openWeatherAPIKey'));
     Map<String, dynamic> result = json.decode(weatherResult.body);
+
     dynamic weatherData = result['main'];
     dynamic wind = result['wind'];
     dynamic weatherState = result['weather'];
-    dynamic cloudsJson = result ['clouds'];
+    dynamic cloudsJson = result['clouds'];
     dynamic visible = result['visibility'];
 
     setState(() {
-      if(selectedTemperatureUnit == TemperatureUnit.Celsius) {
-        temperature = (weatherData['temp'].toDouble() - 273.15).toDouble();
+      // Check if temperature is not null before using it
+      if (weatherData['temp'] != null) {
+        if (selectedTemperatureUnit == TemperatureUnit.Celsius) {
+          temperature = (weatherData['temp'].toDouble() - 273.15).toDouble();
+        } else {
+          temperature = (((weatherData['temp'].toDouble() - 273.15).toDouble() * 1.8).toDouble() + 32.0).toDouble();
+        }
       } else {
-        temperature =
-            (((weatherData['temp'].toDouble() - 273.15).toDouble() * 1.8).toDouble() + 32.0).toDouble();
+        // Handle the case where temperature is null, set a default value, or log an error
+        temperature = 0.0; // You can set any default value here
+        print('Temperature value is null or in unexpected format');
       }
-        humidity = weatherData['humidity'].toDouble();
-        windSpeed = wind['speed'].toDouble();
-        pressure = weatherData['pressure'].toDouble();
-        weatherStateName = weatherState[0]['description'];
-        clouds = cloudsJson['all'].toDouble();
-        visibility = visible.toDouble();
-        degree = wind['deg'].toDouble();
 
+      humidity = weatherData['humidity'].toDouble();
+      windSpeed = wind['speed'].toDouble();
+      pressure = weatherData['pressure'].toDouble();
+      weatherStateName = weatherState[0]['description'];
+      clouds = cloudsJson['all'].toDouble();
+      visibility = visible.toDouble();
+      degree = wind['deg'].toDouble();
     });
+
 
     //to store the data in the data base
     await _database.insertWeather({
@@ -175,14 +184,14 @@ class _HomeState extends State<Home> {
       WeatherDatabase.columnTime: DateTime.now().millisecondsSinceEpoch,
     });
   }
-
   Future<void> fetchForecastData() async {
     var connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.none) {
-      //When no internet connection, load data from database
+      selectedTemperatureUnit = TemperatureUnit.Celsius;
+      // When no internet connection, load data from the database
       var storedData = await _forecastWeatherDatabase.getWeather(location);
       if (storedData.isNotEmpty) {
-        //Use stored data
+        // Use stored data
         setState(() {
           forecastList[0].temperature = storedData[0][ForecastWeatherDatabase.columnTemperature];
           forecastList[0].weatherState = storedData[0][ForecastWeatherDatabase.columnWeatherState];
@@ -190,6 +199,7 @@ class _HomeState extends State<Home> {
       }
       return;
     }
+
     var forecastResult = await http.get(Uri.parse(
         'https://api.openweathermap.org/data/2.5/forecast?q=$location&appid=$openWeatherAPIKey'));
     Map<String, dynamic> forecastData = json.decode(forecastResult.body);
@@ -199,12 +209,13 @@ class _HomeState extends State<Home> {
       List<dynamic> forecasts = forecastData['list'];
       forecasts.forEach((forecast) {
         DateTime forecastDateTime = DateTime.parse(forecast['dt_txt']);
-        if(forecastDateTime.hour == 9) {
-          temperature = forecast['main']['temp'].toDouble() - 273.15;
-        if(selectedTemperatureUnit == TemperatureUnit.Fahrenheit) {
-          temperature = (temperature * 1.8) + 32.0;
-        }
+        if (forecastDateTime.hour == 9) {
+          double temperature = forecast['main']['temp'].toDouble() - 273.15;
+          if (selectedTemperatureUnit == TemperatureUnit.Fahrenheit) {
+            temperature = (temperature * 1.8) + 32.0;
+          }
 
+          // Create a new Forecast object and add it to forecastList
           forecastList.add(Forecast(
             temperature: temperature,
             weatherState: forecast['weather'][0]['description'],
@@ -214,7 +225,7 @@ class _HomeState extends State<Home> {
       });
     });
 
-    //to store the data in the data base
+    // Store the data in the database
     await _forecastWeatherDatabase.insertWeather({
       ForecastWeatherDatabase.columnTemperature: forecastList[0].temperature,
       ForecastWeatherDatabase.columnWeatherState: forecastList[0].weatherState,
@@ -222,11 +233,13 @@ class _HomeState extends State<Home> {
     });
   }
 
-  Future<void> fetchHourlyForecastData() async {
+
+        Future<void> fetchHourlyForecastData() async {
     var connectivityResult = await (Connectivity().checkConnectivity());
     if(connectivityResult == ConnectivityResult.none) {
       var storedData = await _hourlyForecastWeatherDatabase.getWeather(location);
       if(storedData != null) {
+        selectedTemperatureUnit = TemperatureUnit.Celsius;
         //use the stored data
         setState(() {
           hourlyForecastList[0].temperature = storedData[0][HourlyForecastWeatherDatabase.columnTemperature];
@@ -250,12 +263,12 @@ class _HomeState extends State<Home> {
         if (forecastDateTime.year == DateTime.now().year &&
             forecastDateTime.month == DateTime.now().month &&
             forecastDateTime.day == DateTime.now().day) {
-          temperature = hourlyForecast['main']['temp'].toDouble() - 273.15;
+          double hourlyTemperature = hourlyForecast['main']['temp'].toDouble() - 273.15;
           if(selectedTemperatureUnit == TemperatureUnit.Fahrenheit){
-            temperature = (temperature + 1.8) + 32.0;
+            hourlyTemperature = (hourlyTemperature * 1.8) + 32.0;
           }
           hourlyForecastList.add(Forecast(
-            temperature:temperature,
+            temperature: hourlyTemperature,
             weatherState: hourlyForecast['weather'][0]['description'],
             time: forecastDateTime,
           ));
@@ -317,7 +330,7 @@ class _HomeState extends State<Home> {
         selectedTemperatureUnit = selectedUnit;
         userTemperatureUnit = selectedUnit;
         //store the unit
-        _database.setTemperatureUnit(location, selectedUnit == TemperatureUnit.Celsius ? 0 : 1);
+       // _database.setTemperatureUnit(location, selectedUnit == TemperatureUnit.Celsius ? 0 : 1);
 
         _convertTemperature();
       });
