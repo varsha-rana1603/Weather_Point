@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:weather_point/ui/home.dart';
 import 'package:intl/intl.dart';
+import 'package:weather_point/ui/home.dart';
 
 class hourlyForecastWidget extends StatelessWidget {
   final Forecast forecast;
@@ -29,7 +30,8 @@ class hourlyForecastWidget extends StatelessWidget {
           children: [
             const SizedBox(height: 4),
             Text(
-              DateFormat('HH:mm').format(forecast.time), // Show time instead of day
+              DateFormat('HH:mm').format(forecast.time),
+              // Show time instead of day
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,

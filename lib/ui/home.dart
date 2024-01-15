@@ -30,7 +30,7 @@ class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
 
   @override
-  State<Home> createState() => _HomeState();
+  State<Home> createState() => _HomeState();   //we make a seperate class to hold the mutable state of the widget
 }
 
 enum TemperatureUnit { Celsius, Fahrenheit }
@@ -54,14 +54,13 @@ class _HomeState extends State<Home> {
   double clouds = 0.0;
   double visibility = 0.0;
   double degree = 0.0;
+  String imageUrl = '';
+  String location = 'Pilani'; // default city
 
   // Create a shader linear gradient
   final Shader linearGradient = const LinearGradient(
     colors: <Color>[Color(0xffABCFF2), Color(0xff9AC6F3)],
   ).createShader(const Rect.fromLTWH(0.0, 0.0, 200.0, 70.0));
-
-  String imageUrl = '';
-  String location = 'Pilani'; // default city
 
   // get the cities data
   var selectedCities = City.citiesList;
@@ -126,6 +125,13 @@ class _HomeState extends State<Home> {
           clouds = storedData[0][WeatherDatabase.columnClouds];
           visibility = storedData[0][WeatherDatabase.columnVisibility];
           degree = storedData[0][WeatherDatabase.columnWindDegree];
+          int storedTemperatureUnit = storedData[0][WeatherDatabase.columnTemperatureUnit];
+
+          //for the temperature unit
+          selectedTemperatureUnit = storedTemperatureUnit == 0
+          ? TemperatureUnit.Celsius
+          : TemperatureUnit.Fahrenheit;
+          _convertTemperature();
         });
       }
       return;
@@ -310,6 +316,9 @@ class _HomeState extends State<Home> {
       setState(() {
         selectedTemperatureUnit = selectedUnit;
         _convertTemperature();
+
+        //store the unit
+        _database.setTemperatureUnit(location, selectedUnit == TemperatureUnit.Celsius ? 0 : 1);
       });
     }
   }
@@ -476,7 +485,7 @@ class _HomeState extends State<Home> {
                             ),
                           ),
                           Text(
-                            selectedTemperatureUnit == TemperatureUnit.Fahrenheit ? '°F' : '°C',
+                            selectedTemperatureUnit == TemperatureUnit.Celsius ? '°C' : '°F',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 25,

@@ -8,7 +8,7 @@ class GetStarted extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Constants myConstants = Constants();
-    Size size = MediaQuery.of(context).size;
+    Size size = MediaQuery.of(context).size;  //used to obtain the size of screen of the current device's display
 
     return Scaffold(
       body: Container(

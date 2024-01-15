@@ -18,7 +18,7 @@ class WeatherDatabase {
   static const String columnTime = 'time';
   static const String columnTemperatureUnit = 'temp_unit';
 
-    Future<void> initDatabase() async {
+  Future<void> initDatabase() async {
     _database = await openDatabase(
       join(await getDatabasesPath(), 'weather.db'),
       onCreate: (db, version) {
@@ -36,15 +36,24 @@ class WeatherDatabase {
             $columnWindSpeed REAL,
             $columnVisibility REAL,
             $columnTime INTEGER,
-            $columnTemperatureUnit TEXT,
+            $columnTemperatureUnit INTEGER,
           )
           ''',
         );
       },
-      version: 1,    //if the version is increased, the onCreate callback is executed
+      version: 2,    //if the version is increased, the onCreate callback is executed
     );
   }
 
+  Future<void> setTemperatureUnit(String location, int temperatureUnit) async {
+    final db = await _database.database;
+    await db.update(
+      dbTable,
+      {columnTemperatureUnit: temperatureUnit},
+      where: '$columnLocation = ?',
+      whereArgs: [location],
+    );
+  }
   //'insert' inserts a row into the database table
   Future<void> insertWeather(Map<String, dynamic> data) async {
     await _database.insert(
