@@ -325,15 +325,21 @@ class _HomeState extends State<Home> {
             ],
           );
         });
-    if (selectedUnit != null) {
+  if (selectedUnit != null && selectedUnit != selectedTemperatureUnit) {
       setState(() {
         selectedTemperatureUnit = selectedUnit;
-        userTemperatureUnit = selectedUnit;
         //store the unit
-       // _database.setTemperatureUnit(location, selectedUnit == TemperatureUnit.Celsius ? 0 : 1);
+        // _database.setTemperatureUnit(location, selectedUnit == TemperatureUnit.Celsius ? 0 : 1);
 
         _convertTemperature();
       });
+    } else if (selectedUnit == selectedTemperatureUnit) {
+      // Show a message that the unit is already chosen
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('This temperature unit is already chosen.'),
+        ),
+      );
     }
   }
 
